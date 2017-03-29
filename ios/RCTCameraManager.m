@@ -574,8 +574,12 @@ RCT_EXPORT_METHOD(hasFlash:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRej
       [self saveImage:imageData target:target metadata:nil resolve:resolve reject:reject];
 #else
       [[self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo] setVideoOrientation:orientation];
-
-      [self.stillImageOutput captureStillImageAsynchronouslyFromConnection:[self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo] completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
+      AVCaptureConnection *connection = [self.stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
+      if (!connection.enabled) {
+          reject(RCTErrorUnspecified, nil, RCTErrorWithMessage(@"RCTCamera: AVCaptureConnection for the image output not enabled anymore."));
+          return;
+      }
+      [self.stillImageOutput captureStillImageAsynchronouslyFromConnection:connection completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
 
         if (imageDataSampleBuffer) {
           NSData *imageData = [AVCaptureStillImageOutput jpegStillImageNSDataRepresentation:imageDataSampleBuffer];
